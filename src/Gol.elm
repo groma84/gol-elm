@@ -1,72 +1,132 @@
 module Gol exposing (..)
 
+import Array exposing (..)
 
-type Zelle
+
+type Cell
     = Dead
     | Alive
 
 
-type alias Spielfeld =
-    { zellen : List Zelle
-    , breite : Breite
-    , hoehe : Hoehe
+type alias World =
+    { cells : Array Cell
+    , width : Width
+    , height : Height
     }
 
 
-type alias AnzahlNachbarn =
+type alias NumberOfNeighbours =
     Int
 
 
-type alias Breite =
+type alias Width =
     Int
 
 
-type alias Hoehe =
+type alias Height =
     Int
 
 
-toCoords : Breite -> Hoehe -> Int -> ( Int, Int )
-toCoords breite hoehe index =
+type alias Index =
+    Int
+
+
+type alias Coords =
+    { row : Int
+    , column : Int
+    }
+
+
+toCoords : Width -> Height -> Index -> Coords
+toCoords width height index =
     let
-        spaltenIndex =
-            index % breite
+        columnIndex =
+            index % width
 
-        zeilenIndex =
-            (index // hoehe)
+        rowIndex =
+            (index // height)
     in
-        ( zeilenIndex, spaltenIndex )
+        Coords rowIndex columnIndex
 
 
-zaehleNachbarn : Spielfeld -> ( Int, Int ) -> Int
-zaehleNachbarn spielfeld xy =
-    0
+toIndex : Width -> Coords -> Index
+toIndex width coords =
+    coords.row * width + coords.column
 
 
-handGottes : Zelle -> AnzahlNachbarn -> Zelle
-handGottes zelle anzahlNachbarn =
-    case zelle of
+checkIfCoordsAreLegit : World -> Coords -> Bool
+checkIfCoordsAreLegit world coords =
+    if (coords.row < 0 || coords.column < 0 || coords.row >= world.width || coords.column >= world.height) then
+        False
+    else
+        True
+
+
+countAliveNeighbours : World -> Coords -> Int
+countAliveNeighbours world coords =
+    let
+        topLeft =
+            Coords (coords.row - 1) (coords.column - 1)
+
+        topMiddle =
+            Coords (coords.row - 1) (coords.column)
+
+        topRight =
+            Coords (coords.row - 1) (coords.column + 1)
+
+        left =
+            Coords (coords.row) (coords.column - 1)
+
+        right =
+            Coords (coords.row) (coords.column + 1)
+
+        bottomLeft =
+            Coords (coords.row + 1) (coords.column - 1)
+
+        bottomMiddle =
+            Coords (coords.row + 1) (coords.column)
+
+        bottomRight =
+            Coords (coords.row + 1) (coords.column + 1)
+
+        neighbourCoords =
+            [ topLeft, topMiddle, topRight, left, right, bottomLeft, bottomMiddle, bottomRight ]
+
+        legitCoords =
+            List.filter (checkIfCoordsAreLegit world) neighbourCoords
+    in
+        42
+
+
+
+-- TODO
+
+
+determineFate : Cell -> NumberOfNeighbours -> Cell
+determineFate cell numberOfNeighbours =
+    case cell of
         Dead ->
-            if (anzahlNachbarn == 3) then
+            if (numberOfNeighbours == 3) then
                 Alive
             else
                 Dead
 
         Alive ->
-            if (anzahlNachbarn == 2 || anzahlNachbarn == 3) then
+            if (numberOfNeighbours == 2 || numberOfNeighbours == 3) then
                 Alive
             else
                 Dead
 
 
-iteration : Spielfeld -> Spielfeld
-iteration spielfeld =
+iteration : World -> World
+iteration world =
     let
-        gesamtvorgang index zelle =
-            toCoords spielfeld.breite spielfeld.hoehe index
-                |> zaehleNachbarn spielfeld
-                |> handGottes zelle
+        oneRound index cell =
+            toCoords world.width world.height index
+                |> countAliveNeighbours world
+                |> determineFate cell
 
-        neueZellen =
-            List.indexedMap gesamtvorgang spielfeld.zellen
+        newCells =
+            Array.indexedMap oneRound world.cells
     in
-        { spielfeld | zellen = neueZellen }
+        { world | cells = newCells }
