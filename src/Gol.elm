@@ -1,40 +1,26 @@
 module Gol exposing (..)
 
 import Array exposing (..)
+import Types exposing (..)
 
 
-type Cell
-    = Dead
-    | Alive
+createWorld : Width -> Height -> NumberOfAliveCells -> World
+createWorld width height numberOfAliveCells =
+    let
+        length =
+            width * height
 
+        alivePart =
+            List.repeat numberOfAliveCells Alive
 
-type alias World =
-    { cells : Array Cell
-    , width : Width
-    , height : Height
-    }
-
-
-type alias NumberOfNeighbours =
-    Int
-
-
-type alias Width =
-    Int
-
-
-type alias Height =
-    Int
-
-
-type alias Index =
-    Int
-
-
-type alias Coords =
-    { row : Int
-    , column : Int
-    }
+        deadPart =
+            List.repeat (length - numberOfAliveCells) Dead
+    in
+        -- TODO: Mischen der Positionen der lebenden Zellen
+        { width = width
+        , height = height
+        , cells = List.append alivePart deadPart |> Array.fromList
+        }
 
 
 toCoords : Width -> Height -> Index -> Coords
@@ -95,11 +81,20 @@ countAliveNeighbours world coords =
         legitCoords =
             List.filter (checkIfCoordsAreLegit world) neighbourCoords
     in
-        42
+        legitCoords
+            |> List.map (toIndex world.width)
+            |> List.map (\i -> Array.get i world.cells)
+            |> List.map (\c -> Maybe.withDefault Dead c)
+            |> List.filter
+                (\c ->
+                    case c of
+                        Alive ->
+                            True
 
-
-
--- TODO
+                        Dead ->
+                            False
+                )
+            |> List.length
 
 
 determineFate : Cell -> NumberOfNeighbours -> Cell

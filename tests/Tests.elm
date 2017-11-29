@@ -3,7 +3,9 @@ module Tests exposing (..)
 import Array
 import Test exposing (..)
 import Expect
+import Fixtures
 import Gol exposing (..)
+import Types exposing (..)
 
 
 all : Test
@@ -60,5 +62,61 @@ all =
             , test "0,3 ist ungueltig" <|
                 \_ ->
                     Expect.false "Muss ungueltig sein" (checkIfCoordsAreLegit (World Array.empty 3 3) (Coords 0 3))
+            ]
+        , describe "countAliveNeighbours"
+            [ describe "tote Welt"
+                [ test "immer 0 lebende Nachbarn" <|
+                    \_ -> Expect.equal 0 (countAliveNeighbours Fixtures.deadWorld (Coords 0 0))
+                , test "auch in der Mitte 0 lebende Nachbarn" <|
+                    \_ -> Expect.equal 0 (countAliveNeighbours Fixtures.deadWorld (Coords 1 1))
+                , test "in der Ecke unten 0 lebende Nachbarn" <|
+                    \_ -> Expect.equal 0 (countAliveNeighbours Fixtures.deadWorld (Coords 2 2))
+                ]
+            , describe "lebende Welt"
+                [ test "oben links 3 lebende Nachbarn" <|
+                    \_ -> Expect.equal 3 (countAliveNeighbours Fixtures.aliveWorld (Coords 0 0))
+                , test "in der Mitte 8 lebende Nachbarn" <|
+                    \_ -> Expect.equal 8 (countAliveNeighbours Fixtures.aliveWorld (Coords 1 1))
+                , test "in der Ecke unten wieder 3 lebende Nachbarn" <|
+                    \_ -> Expect.equal 3 (countAliveNeighbours Fixtures.aliveWorld (Coords 2 2))
+                ]
+            ]
+        , describe "createWorld"
+            [ test "Welt hat korrekte Breite" <|
+                \_ ->
+                    let
+                        world =
+                            createWorld 3 2 0
+                    in
+                        Expect.equal 3 world.width
+            , test "Welt hat korrekte Hoehe" <|
+                \_ ->
+                    let
+                        world =
+                            createWorld 3 2 0
+                    in
+                        Expect.equal 2 world.height
+            , test "leere Welt ist leer" <|
+                \_ ->
+                    let
+                        world =
+                            createWorld 3 2 0
+
+                        aliveCells =
+                            Array.filter (\c -> c == Alive) world.cells
+                                |> Array.length
+                    in
+                        Expect.equal 0 aliveCells
+            , test "lebendige Welt ist lebendig" <|
+                \_ ->
+                    let
+                        world =
+                            createWorld 3 2 6
+
+                        aliveCells =
+                            Array.filter (\c -> c == Alive) world.cells
+                                |> Array.length
+                    in
+                        Expect.equal 6 aliveCells
             ]
         ]
