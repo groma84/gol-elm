@@ -1,5 +1,5 @@
 body {
-  font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
+  font-family: monospace;
   margin: 0;
   text-align: center;
   color: #293c4b;
@@ -9,7 +9,21 @@ h1 {
   font-size: 30px;
 }
 
-img {
-  margin: 20px 0;
-  max-width: 200px;
+.world {
+  display: flex;
+  flex-wrap: wrap;
+  margin: auto;
+}
+
+.world > div {
+  width: 30px;
+  height: 30px;
+}
+
+.alive {
+  color: green;
+}
+
+.dead {
+  color: red;
 }

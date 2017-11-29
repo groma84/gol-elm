@@ -7,6 +7,7 @@ import Types exposing (..)
 createWorld : Width -> Height -> NumberOfAliveCells -> World
 createWorld width height numberOfAliveCells =
     let
+        -- TODO: Begrenzung von numberOfAliveCells auf width * height
         length =
             width * height
 

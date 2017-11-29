@@ -1,7 +1,8 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, button)
-import Html.Attributes exposing (type_)
+import Array
+import Html exposing (Html, text, div, button, h1)
+import Html.Attributes exposing (type_, class, style)
 import Html.Events exposing (onClick)
 import Time exposing (Time, second)
 import Types exposing (..)
@@ -74,11 +75,36 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ button [ type_ "button", onClick StartGame ] [ text "Start" ]
-        , button [ type_ "button", onClick StopGame ] [ text "Stop" ]
-        , button [ type_ "button", onClick RestartGame ] [ text "Restart" ]
-        ]
+    let
+        drawCell cell =
+            case cell of
+                Alive ->
+                    div [ class "alive" ] [ text "X" ]
+
+                Dead ->
+                    div [ class "dead" ] [ text "O" ]
+
+        drawCells cells =
+            cells
+                |> Array.map drawCell
+                |> Array.toList
+
+        cellSize =
+            30
+    in
+        div []
+            [ h1 [] [ text "Game of Life" ]
+            , div
+                [ class "world"
+                , style [ ( "width", ((model.world.width * cellSize) |> toString) ++ "px" ), ( "height", ((model.world.height * cellSize) |> toString) ++ "px" ) ]
+                ]
+                (drawCells model.world.cells)
+            , div []
+                [ button [ type_ "button", onClick StartGame ] [ text "Start" ]
+                , button [ type_ "button", onClick StopGame ] [ text "Stop" ]
+                , button [ type_ "button", onClick RestartGame ] [ text "Restart" ]
+                ]
+            ]
 
 
 
