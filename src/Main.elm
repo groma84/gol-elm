@@ -99,6 +99,7 @@ view model =
                 , style [ ( "width", ((model.world.width * cellSize) |> toString) ++ "px" ), ( "height", ((model.world.height * cellSize) |> toString) ++ "px" ) ]
                 ]
                 (drawCells model.world.cells)
+            , div [] [ text "Inputs für Weltgröße und Startzellen" ]
             , div []
                 [ button [ type_ "button", onClick StartGame ] [ text "Start" ]
                 , button [ type_ "button", onClick StopGame ] [ text "Stop" ]
