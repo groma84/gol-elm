@@ -1,9 +1,10 @@
 module Main exposing (..)
 
 import Array
-import Html exposing (Html, text, div, button, h1)
-import Html.Attributes exposing (type_, class, style)
-import Html.Events exposing (onClick)
+import Random
+import Html exposing (Html, text, div, button, h1, form, input)
+import Html.Attributes exposing (type_, class, style, value)
+import Html.Events exposing (onClick, onInput)
 import Time exposing (Time, second)
 import Types exposing (..)
 import Gol exposing (..)
@@ -14,18 +15,33 @@ import Gol exposing (..)
 
 type alias Model =
     { gameRunning : Bool
-    , world : World
+    , world : Maybe World
+    , width : Int
+    , height : Int
+    , numberOfAliveCells : Int
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    -- TODO: Weltgröße und Start-Zellen anpassbar machen
-    ( { gameRunning = False
-      , world = createWorld 8 8 20
-      }
-    , Cmd.none
-    )
+    let
+        initialWidth =
+            8
+
+        initialHeight =
+            8
+
+        randomCmd =
+            createRandomValues initialWidth initialHeight
+    in
+        ( { gameRunning = False
+          , world = Nothing
+          , width = initialWidth
+          , height = initialHeight
+          , numberOfAliveCells = 20
+          }
+        , randomCmd
+        )
 
 
 
@@ -36,8 +52,22 @@ type Msg
     = NoOp
     | StartGame
     | StopGame
-    | RestartGame
+    | RegenerateWorld
+    | CreateNewWorld (List Int)
     | Tick Time
+    | WidthChanged String
+    | HeightChanged String
+    | NumberOfAliveCellsChanged String
+
+
+createRandomValues : Int -> Int -> Cmd Msg
+createRandomValues width height =
+    let
+        totalFieldCount =
+            width * height
+    in
+        Random.list totalFieldCount (Random.int 0 (totalFieldCount - 1))
+            |> Random.generate CreateNewWorld
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -52,21 +82,53 @@ update msg model =
         StopGame ->
             ( { model | gameRunning = False }, Cmd.none )
 
-        RestartGame ->
-            -- TODO: Weltgröße und Start-Zellen anpassbar machen
-            ( { model
-                | gameRunning = False
-                , world = createWorld 8 8 20
-              }
-            , Cmd.none
-            )
+        RegenerateWorld ->
+            let
+                generateNumbersCmd =
+                    createRandomValues model.width model.height
+            in
+                ( { model | gameRunning = False }, generateNumbersCmd )
+
+        CreateNewWorld randomNumbers ->
+            let
+                newWorld =
+                    createWorld model.width model.height model.numberOfAliveCells randomNumbers
+                        |> Just
+            in
+                ( { model | world = newWorld }, Cmd.none )
 
         Tick time ->
             let
                 newWorld =
-                    iteration model.world
+                    case model.world of
+                        Nothing ->
+                            model.world
+
+                        Just oldWorld ->
+                            iteration oldWorld |> Just
             in
                 ( { model | world = newWorld }, Cmd.none )
+
+        WidthChanged newVal ->
+            let
+                parsedNumber =
+                    Result.withDefault model.width (String.toInt newVal)
+            in
+                ( { model | width = parsedNumber }, Cmd.none )
+
+        HeightChanged newVal ->
+            let
+                parsedNumber =
+                    Result.withDefault model.height (String.toInt newVal)
+            in
+                ( { model | height = parsedNumber }, Cmd.none )
+
+        NumberOfAliveCellsChanged newVal ->
+            let
+                parsedNumber =
+                    Result.withDefault model.numberOfAliveCells (String.toInt newVal)
+            in
+                ( { model | numberOfAliveCells = parsedNumber }, Cmd.none )
 
 
 
@@ -84,26 +146,69 @@ view model =
                 Dead ->
                     div [ class "dead" ] [ text "O" ]
 
-        drawCells cells =
-            cells
-                |> Array.map drawCell
-                |> Array.toList
+        drawCells world =
+            case world of
+                Nothing ->
+                    [ div [] [] ]
+
+                Just w ->
+                    w.cells
+                        |> Array.map drawCell
+                        |> Array.toList
 
         cellSize =
             30
+
+        startGameButton =
+            case model.gameRunning of
+                True ->
+                    text ""
+
+                False ->
+                    button [ type_ "button", onClick StartGame ] [ text "Start" ]
+
+        stopGameButton =
+            case model.gameRunning of
+                True ->
+                    button [ type_ "button", onClick StopGame ] [ text "Stop" ]
+
+                False ->
+                    text ""
+
+        regenerateWorldButton =
+            case model.gameRunning of
+                True ->
+                    text ""
+
+                False ->
+                    button [ type_ "button", onClick RegenerateWorld ] [ text "Generate New World" ]
+
+        changeWorldSettingsForm =
+            case model.gameRunning of
+                True ->
+                    text ""
+
+                False ->
+                    form []
+                        [ input [ type_ "number", Html.Attributes.min "1", Html.Attributes.max "20", value (model.width |> toString), onInput WidthChanged ] []
+                        , input [ type_ "number", Html.Attributes.min "1", Html.Attributes.max "20", value (model.height |> toString), onInput HeightChanged ] []
+                        , input [ type_ "number", Html.Attributes.min "1", Html.Attributes.max "400", value (model.numberOfAliveCells |> toString), onInput NumberOfAliveCellsChanged ] []
+                        ]
     in
         div []
             [ h1 [] [ text "Game of Life" ]
             , div
                 [ class "world"
-                , style [ ( "width", ((model.world.width * cellSize) |> toString) ++ "px" ), ( "height", ((model.world.height * cellSize) |> toString) ++ "px" ) ]
+                , style [ ( "width", ((model.width * cellSize) |> toString) ++ "px" ), ( "height", ((model.height * cellSize) |> toString) ++ "px" ) ]
                 ]
-                (drawCells model.world.cells)
-            , div [] [ text "Inputs für Weltgröße und Startzellen" ]
+                (drawCells model.world)
+            , div [ class "buttons" ]
+                [ startGameButton
+                , stopGameButton
+                , regenerateWorldButton
+                ]
             , div []
-                [ button [ type_ "button", onClick StartGame ] [ text "Start" ]
-                , button [ type_ "button", onClick StopGame ] [ text "Stop" ]
-                , button [ type_ "button", onClick RestartGame ] [ text "Restart" ]
+                [ changeWorldSettingsForm
                 ]
             ]
 

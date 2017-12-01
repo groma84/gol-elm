@@ -4,23 +4,34 @@ import Array exposing (..)
 import Types exposing (..)
 
 
-createWorld : Width -> Height -> NumberOfAliveCells -> World
-createWorld width height numberOfAliveCells =
+createWorld : Width -> Height -> NumberOfAliveCells -> List Int -> World
+createWorld width height numberOfAliveCells mixNumbers =
     let
-        -- TODO: Begrenzung von numberOfAliveCells auf width * height
-        length =
+        totalFieldCount =
             width * height
 
         alivePart =
-            List.repeat numberOfAliveCells Alive
+            let
+                realNumberOfCells =
+                    min totalFieldCount numberOfAliveCells
+            in
+                List.repeat realNumberOfCells Alive
 
         deadPart =
-            List.repeat (length - numberOfAliveCells) Dead
+            List.repeat (totalFieldCount - numberOfAliveCells) Dead
+
+        sortedCells =
+            List.append alivePart deadPart
+
+        randomizedCells =
+            List.map2 (\a b -> ( a, b )) sortedCells mixNumbers
+                |> List.sortBy (\( _, b ) -> b)
+                |> List.map Tuple.first
+                |> Array.fromList
     in
-        -- TODO: Mischen der Positionen der lebenden Zellen
         { width = width
         , height = height
-        , cells = List.append alivePart deadPart |> Array.fromList
+        , cells = randomizedCells
         }
 
 
@@ -31,7 +42,7 @@ toCoords width height index =
             index % width
 
         rowIndex =
-            (index // height)
+            index // height
     in
         Coords rowIndex columnIndex
 

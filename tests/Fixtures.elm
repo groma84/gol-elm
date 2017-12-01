@@ -19,3 +19,8 @@ aliveWorld =
     , height = 3
     , cells = [ Alive, Alive, Alive, Alive, Alive, Alive, Alive, Alive, Alive ] |> Array.fromList
     }
+
+
+sortNumbersNoSort : List Int
+sortNumbersNoSort =
+    List.range 0 8

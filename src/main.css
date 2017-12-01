@@ -21,9 +21,15 @@ h1 {
 }
 
 .alive {
-  color: green;
+  color: transparent;
+  background-color: green;
 }
 
 .dead {
-  color: red;
+  color: transparent;
+  background-color: lightgray;
+}
+
+.buttons {
+  margin: 20px 0px;
 }

@@ -86,21 +86,21 @@ all =
                 \_ ->
                     let
                         world =
-                            createWorld 3 2 0
+                            createWorld 3 2 0 Fixtures.sortNumbersNoSort
                     in
                         Expect.equal 3 world.width
             , test "Welt hat korrekte Hoehe" <|
                 \_ ->
                     let
                         world =
-                            createWorld 3 2 0
+                            createWorld 3 2 0 Fixtures.sortNumbersNoSort
                     in
                         Expect.equal 2 world.height
             , test "leere Welt ist leer" <|
                 \_ ->
                     let
                         world =
-                            createWorld 3 2 0
+                            createWorld 3 2 0 Fixtures.sortNumbersNoSort
 
                         aliveCells =
                             Array.filter (\c -> c == Alive) world.cells
@@ -111,7 +111,7 @@ all =
                 \_ ->
                     let
                         world =
-                            createWorld 3 2 6
+                            createWorld 3 2 6 Fixtures.sortNumbersNoSort
 
                         aliveCells =
                             Array.filter (\c -> c == Alive) world.cells
