@@ -3,7 +3,7 @@ module Main exposing (..)
 import Array
 import Random
 import Html exposing (Html, text, div, button, h1, form, input)
-import Html.Attributes exposing (type_, class, style, value)
+import Html.Attributes exposing (type_, class, classList, style, value)
 import Html.Events exposing (onClick, onInput)
 import Time exposing (Time, second)
 import Types exposing (..)
@@ -19,6 +19,7 @@ type alias Model =
     , width : Int
     , height : Int
     , numberOfAliveCells : Int
+    , worldNeedsRegeneration : Bool
     }
 
 
@@ -39,6 +40,7 @@ init =
           , width = initialWidth
           , height = initialHeight
           , numberOfAliveCells = 20
+          , worldNeedsRegeneration = False
           }
         , randomCmd
         )
@@ -87,7 +89,7 @@ update msg model =
                 generateNumbersCmd =
                     createRandomValues model.width model.height
             in
-                ( { model | gameRunning = False }, generateNumbersCmd )
+                ( { model | gameRunning = False, worldNeedsRegeneration = False }, generateNumbersCmd )
 
         CreateNewWorld randomNumbers ->
             let
@@ -114,21 +116,21 @@ update msg model =
                 parsedNumber =
                     Result.withDefault model.width (String.toInt newVal)
             in
-                ( { model | width = parsedNumber }, Cmd.none )
+                ( { model | width = parsedNumber, worldNeedsRegeneration = True }, Cmd.none )
 
         HeightChanged newVal ->
             let
                 parsedNumber =
                     Result.withDefault model.height (String.toInt newVal)
             in
-                ( { model | height = parsedNumber }, Cmd.none )
+                ( { model | height = parsedNumber, worldNeedsRegeneration = True }, Cmd.none )
 
         NumberOfAliveCellsChanged newVal ->
             let
                 parsedNumber =
                     Result.withDefault model.numberOfAliveCells (String.toInt newVal)
             in
-                ( { model | numberOfAliveCells = parsedNumber }, Cmd.none )
+                ( { model | numberOfAliveCells = parsedNumber, worldNeedsRegeneration = True }, Cmd.none )
 
 
 
@@ -160,11 +162,14 @@ view model =
             30
 
         startGameButton =
-            case model.gameRunning of
-                True ->
+            case ( model.gameRunning, model.worldNeedsRegeneration ) of
+                ( _, True ) ->
                     text ""
 
-                False ->
+                ( True, _ ) ->
+                    text ""
+
+                ( False, _ ) ->
                     button [ type_ "button", onClick StartGame ] [ text "Start" ]
 
         stopGameButton =
@@ -181,7 +186,7 @@ view model =
                     text ""
 
                 False ->
-                    button [ type_ "button", onClick RegenerateWorld ] [ text "Generate New World" ]
+                    button [ type_ "button", onClick RegenerateWorld, classList [ ( "clickMe", model.worldNeedsRegeneration ) ] ] [ text "Generate New World" ]
 
         changeWorldSettingsForm =
             case model.gameRunning of
@@ -194,14 +199,27 @@ view model =
                         , input [ type_ "number", Html.Attributes.min "1", Html.Attributes.max "20", value (model.height |> toString), onInput HeightChanged ] []
                         , input [ type_ "number", Html.Attributes.min "1", Html.Attributes.max "400", value (model.numberOfAliveCells |> toString), onInput NumberOfAliveCellsChanged ] []
                         ]
+
+        world =
+            case model.worldNeedsRegeneration of
+                True ->
+                    div [] []
+
+                False ->
+                    div
+                        [ class "world"
+                        , style [ ( "width", ((model.width * cellSize) |> toString) ++ "px" ), ( "height", ((model.height * cellSize) |> toString) ++ "px" ) ]
+                        ]
+                        (drawCells model.world)
     in
         div []
             [ h1 [] [ text "Game of Life" ]
             , div
-                [ class "world"
-                , style [ ( "width", ((model.width * cellSize) |> toString) ++ "px" ), ( "height", ((model.height * cellSize) |> toString) ++ "px" ) ]
+                [ class "worldContainer"
+                , classList [ ( "disabledWorldView", model.worldNeedsRegeneration ) ]
+                , style [ ( "height", ((20 * cellSize) |> toString) ++ "px" ), ( "width", ((20 * cellSize) |> toString) ++ "px" ) ]
                 ]
-                (drawCells model.world)
+                [ world ]
             , div [ class "buttons" ]
                 [ startGameButton
                 , stopGameButton

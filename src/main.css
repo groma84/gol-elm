@@ -33,3 +33,15 @@ h1 {
 .buttons {
   margin: 20px 0px;
 }
+
+.disabledWorldView {
+  background-color: lightgray;
+}
+
+.clickMe {
+  background-color: orangered;
+}
+
+.worldContainer {
+  margin: auto;
+}
